@@ -1,0 +1,1231 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LocalBusinessSchema from '../components/LocalBusinessSchema.astro';
+import BreadcrumbSchema from '../components/BreadcrumbSchema.astro';
+import { ciudades, EMPRESA } from '../data/index';
+import { siteConfig } from '../config/site';
+import { content as rawContent } from '../config/content';
+
+const mainCiudad = ciudades[0];
+// Reemplaza {{city}} en cualquier string, recursivamente en todo el objeto content
+const c = (str: string) => str.replace(/\{\{city\}\}/g, siteConfig.mainCity);
+function deepC(obj: any): any {
+  if (typeof obj === 'string') return c(obj);
+  if (Array.isArray(obj)) return obj.map(deepC);
+  if (obj && typeof obj === 'object') return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, deepC(v)]));
+  return obj;
+}
+const content = deepC(rawContent);
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+// ── Mapa de iconos SVG por nombre ───────────────────────────────────────
+const ICON_PATHS: Record<string, string> = {
+  shield:  `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>`,
+  clock:   `<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>`,
+  check:   `<polyline points="20 6 9 17 4 12"/>`,
+  box:     `<polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>`,
+  heart:   `<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>`,
+  users:   `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>`,
+  star:    `<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>`,
+  leaf:    `<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>`,
+  truck:   `<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>`,
+  trash:   `<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>`,
+  recycle: `<polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>`,
+  award:   `<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>`,
+  zap:     `<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>`,
+  home:    `<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>`,
+  wrench:  `<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>`,
+  package: `<line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>`,
+};
+function iconSvg(name: string): string {
+  const paths = ICON_PATHS[name] ?? ICON_PATHS['shield'];
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+}
+
+const canonical = `${siteConfig.web}/`;
+
+// ── Fórmula del título configurable (evita footprint de título idéntico entre webs) ──
+const _h = content.hero.h1main;
+const _c = siteConfig.mainCity;
+const _b = siteConfig.businessName;
+const _s = siteConfig.serviceType;
+const titleFormulas: Record<number, string> = {
+  1: `${_h} en ${_c} – Presupuesto gratis | ${_b}`,
+  2: `${_b} | ${_h} en ${_c}`,
+  3: `${_h} en ${_c} ✓ ${_b} — Servicio profesional`,
+  4: `Especialistas en ${_s} · ${_c} | ${_b}`,
+};
+const title = titleFormulas[siteConfig.titleFormula ?? 1] ?? titleFormulas[1];
+const description = `${content.hero.description} Llama al ${siteConfig.phone}.`;
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <LocalBusinessSchema ciudad={mainCiudad} servicio={mainCiudad.servicios[0]} url={canonical} slot="head" />
+  <BreadcrumbSchema items={[{ name: 'Inicio', url: canonical }]} slot="head" />
+
+  <!-- ① HERO LOCAL ─────────────────────────────────────── -->
+  <section class="hero" aria-label="Presentación del servicio">
+    <div class="container hero-inner">
+
+      <div class="hero-text">
+        <span class="eyebrow hero-eyebrow">{c(content.hero.eyebrow)}</span>
+
+        <h1>
+          {content.hero.h1main}<br />
+          <span class="hero-h1-accent">{c(content.hero.h1accent)}</span>
+        </h1>
+
+        <p class="hero-sub">{content.hero.description}</p>
+
+        <div class="hero-ctas">
+          <a href={`tel:${mainCiudad.telefono.replace(/\s/g,'')}`} class="btn btn-primary btn-lg">
+            📞 Llamar ahora — {mainCiudad.telefono}
+          </a>
+          <a href="#contacto-form" class="btn btn-ghost btn-lg">
+            Pedir presupuesto gratis
+          </a>
+        </div>
+
+        <ul class="hero-badges" aria-label="Ventajas del servicio">
+          <li><span aria-hidden="true">⚡</span> {content.hero.badge1}</li>
+          <li><span aria-hidden="true">🏠</span> {content.hero.badge2}</li>
+          <li><span aria-hidden="true">♻️</span> {content.hero.badge3}</li>
+          <li><span aria-hidden="true">✅</span> {content.hero.badge4}</li>
+        </ul>
+
+        {siteConfig.externalLink1?.url && (
+          <p class="hero-ext-link">
+            <a
+              href={siteConfig.externalLink1.url}
+              target="_blank"
+              rel={`noopener noreferrer${siteConfig.externalLink1.rel === 'nofollow' ? ' nofollow' : ''}`}
+            >{siteConfig.externalLink1.anchor}</a>
+          </p>
+        )}
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <div class="hero-card">
+          <div class="hero-card-header">
+            <span class="status-dot"></span>
+            <span>Disponible ahora en {siteConfig.mainCity}</span>
+          </div>
+          <p class="hero-card-stat">{c(content.hero.cardStat)}</p>
+          <p class="hero-card-label">{c(content.hero.cardLabel)}</p>
+          <div class="hero-card-metrics">
+            <div><strong data-count={ciudades.length} data-suffix="">{ciudades.length}</strong><span>municipios</span></div>
+            <div><strong>24 h</strong><span>presupuesto</span></div>
+            <div><strong>4,9 ★</strong><span>valoración</span></div>
+          </div>
+          <hr class="hero-card-divider" />
+          <p class="hero-card-caption">Zona de actuación</p>
+          <div class="hero-card-cities">
+            {ciudades.map(c => <span>{c.nombre}</span>)}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="hero-wave" aria-hidden="true">
+      <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
+        <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="#f8fafc"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ②–⑧ SECCIONES CONFIGURABLES (orden y visibilidad desde siteConfig.sectionOrder) -->
+  {(siteConfig.sectionOrder ?? ['beneficios','servicios','zona','proceso','testimonios','precios','faq']).map(sec => (
+
+    sec === 'beneficios' ? (
+      <section class="sec sec--tint" aria-labelledby="beneficios-heading">
+        <div class="container">
+          <div class="section-header reveal">
+            <h2 id="beneficios-heading">{c((content.sections as any).beneficiosH2 ?? '¿Por qué elegirnos en {{city}}?')}</h2>
+            <p class="section-sub">{content.sections.beneficiosSub}</p>
+          </div>
+          <ul class="benefits-grid reveal-stagger" role="list">
+            {content.benefits.map(b => (
+              <li class="benefit-card">
+                <div class="benefit-icon" aria-hidden="true" set:html={iconSvg(b.icon)} />
+                <h3>{c(b.title)}</h3>
+                <p>{c(b.description)}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+    ) : sec === 'servicios' ? (
+      <section class="sec" aria-labelledby="servicios-heading">
+        <div class="container">
+          <div class="section-header reveal">
+            <h2 id="servicios-heading">{c((content.sections as any).serviciosH2 ?? 'Nuestros servicios en {{city}}')}</h2>
+            <p class="section-sub">{content.sections.serviciosSub}</p>
+          </div>
+          <p class="srv-grid-intro">
+            Servicios de <a href="/servicios/">{siteConfig.serviceType} en {siteConfig.mainCity}</a>. Equipo propio, presupuesto gratuito y atención personalizada.
+          </p>
+          <ul class="srv-grid reveal-stagger" role="list">
+            {content.serviceSummaries.map(srv => (
+              <li class={`srv-card${srv.featured ? ' srv-card--featured' : ''}`}>
+                {srv.featured && <div class="srv-card-badge">Más solicitado</div>}
+                <div class="srv-icon" aria-hidden="true" set:html={iconSvg('package')} />
+                <h3>{srv.nombre}</h3>
+                <p>{srv.description}</p>
+                <ul class="srv-features">
+                  {srv.features.map(f => <li>✓ {f}</li>)}
+                </ul>
+                {srv.ctaPage
+                  ? <a href={`/${mainCiudad.slug}/${srv.slug}/`} class="btn btn-primary">Ver servicio →</a>
+                  : <a href="/contacto" class="btn btn-primary">Solicitar presupuesto →</a>
+                }
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+    ) : sec === 'zona' ? (
+      <section class="sec sec--tint" aria-labelledby="zona-heading">
+        <div class="container">
+          <div class="section-header reveal">
+            <h2 id="zona-heading">{c((content.sections as any).zonaH2 ?? 'Zona de actuación: {{city}} y alrededores')}</h2>
+            <p class="section-sub">Cubrimos {siteConfig.mainCity} y {ciudades.length - 1} municipios de la comarca. Desplazamiento incluido en el presupuesto.</p>
+          </div>
+          <ul class="zona-grid reveal-stagger" role="list">
+            {ciudades.map(ciudad => (
+              <li class="zona-card">
+                <div class="zona-card-header">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                    <path d="M8 1.5C5.52 1.5 3.5 3.52 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.48-2.02-4.5-4.5-4.5z"/><circle cx="8" cy="6" r="1.5"/>
+                  </svg>
+                  <strong>{ciudad.nombre}</strong>
+                </div>
+                <ul class="zona-services">
+                  {ciudad.servicios.map(s => (
+                    <li><a href={`/${ciudad.slug}/${s.slug}/`}>{cap(s.nombre)} en {ciudad.nombre}</a></li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+          <div class="zona-barrios">
+            <p class="zona-barrios-label">También en los barrios de {siteConfig.mainCity}:</p>
+            <ul class="zona-tags" role="list">
+              {mainCiudad.zonas.map(z => <li>{z}</li>)}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+    ) : sec === 'proceso' ? (
+      <section class="sec" aria-labelledby="proceso-heading">
+        <div class="container">
+          <div class="section-header">
+            <h2 id="proceso-heading">{c((content.sections as any).procesoH2 ?? 'Cómo trabajamos: 4 pasos sin complicaciones')}</h2>
+            <p class="section-sub">{c(content.sections.beneficiosSub)}</p>
+          </div>
+          <ol class="proceso-steps">
+            {content.proceso.map((paso, i) => (
+              <li>
+                <div class="proceso-num" aria-hidden="true">{i + 1}</div>
+                <div class="proceso-content">
+                  <h3>{c(paso.titulo)}</h3>
+                  <p>{c(paso.descripcion)}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+    ) : sec === 'testimonios' ? (
+      <section class="sec sec--dark" aria-labelledby="testimonios-heading">
+        <div class="container">
+          <div class="section-header">
+            <h2 id="testimonios-heading">{c((content.sections as any).testimoniosH2 ?? 'Lo que dicen nuestros clientes en {{city}}')}</h2>
+            <p class="section-sub-dark">{content.sections.testimoniosSub}</p>
+          </div>
+          <div class="testimonios-track" role="list">
+            {content.testimonials.map(t => (
+              <article class="testimonio-card" role="listitem">
+                <div class="testimonio-stars" aria-label="5 estrellas">★★★★★</div>
+                <blockquote><p>"{t.quote}"</p></blockquote>
+                <footer>
+                  <div class="testimonio-avatar">{t.initials}</div>
+                  <div>
+                    <cite class="testimonio-nombre">{t.name}</cite>
+                    <span class="testimonio-lugar">{c(t.location)} · {t.service}</span>
+                  </div>
+                </footer>
+              </article>
+            ))}
+          </div>
+          <div class="testimonio-hint" aria-hidden="true">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8l6 6 6-6"/></svg>
+            Desliza para ver más
+          </div>
+        </div>
+      </section>
+
+    ) : sec === 'precios' ? (
+      <section class="sec sec--tint" aria-labelledby="precios-heading">
+        <div class="container">
+          <div class="section-header">
+            <h2 id="precios-heading">{c((content.sections as any).preciosH2 ?? 'Precios orientativos en {{city}}')}</h2>
+            <p class="section-sub">{content.sections.preciosSub}</p>
+          </div>
+          <ul class="precios-grid" role="list">
+            {content.pricing.map(p => (
+              <li class={`precio-card${p.highlight ? ' precio-card--highlight' : ''}`}>
+                {p.highlight && 'badge' in p && <div class="precio-badge">{(p as any).badge}</div>}
+                <div class="precio-tipo">{p.tipo}</div>
+                <div class="precio-desde">desde</div>
+                <div class="precio-valor">{p.precio}</div>
+                <ul class="precio-incl">
+                  {p.features.map(f => <li>{f}</li>)}
+                </ul>
+                <a href={`tel:${mainCiudad.telefono.replace(/\s/g,'')}`}
+                   class={`btn btn-full ${p.highlight ? 'btn-white' : 'btn-primary'}`}>
+                  Pedir precio exacto
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p class="precios-aviso">* {c(content.sections.preciosNota)}</p>
+        </div>
+      </section>
+
+    ) : sec === 'faq' ? (
+      <section class="sec" aria-labelledby="faq-heading">
+        <div class="container">
+          <div class="section-header">
+            <h2 id="faq-heading">{c((content.sections as any).faqH2 ?? 'Preguntas frecuentes en {{city}}')}</h2>
+            <p class="section-sub">{content.sections.faqSub}</p>
+          </div>
+          <div class="faq-list">
+            {content.faqs.map((faq, i) => (
+              <details class="faq-item" open={i === 0 || undefined}>
+                <summary>
+                  <span>{c(faq.pregunta)}</span>
+                  <svg class="faq-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M5 8l5 5 5-5"/>
+                  </svg>
+                </summary>
+                <p>{faq.respuesta}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+    ) : null
+  ))}
+
+  <!-- ⑨ CTA FINAL + CONTACTO ───────────────────────────── -->
+  <section class="sec sec--dark cta-final" id="contacto-form" aria-labelledby="cta-heading">
+    <div class="container">
+      <div class="cta-grid">
+
+        <!-- Formulario -->
+        <div class="cta-form-wrap">
+          <h2 id="cta-heading">Pide tu presupuesto gratuito ahora</h2>
+          <p class="cta-form-sub">Sin compromiso. Te respondemos en menos de 24 horas laborables.</p>
+
+          <form
+            class="cta-form"
+            name="contacto-home"
+            method="POST"
+            action="/gracias/"
+            data-netlify="true"
+            netlify-honeypot="bot-field"
+            novalidate
+          >
+            <input type="hidden" name="form-name" value="contacto-home" />
+            <p class="visually-hidden">
+              <label>No rellenar: <input name="bot-field" /></label>
+            </p>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="nombre">Nombre <abbr title="Obligatorio">*</abbr></label>
+                <input id="nombre" name="nombre" type="text" placeholder="Tu nombre" required autocomplete="name" />
+              </div>
+              <div class="form-group">
+                <label for="telefono">Teléfono <abbr title="Obligatorio">*</abbr></label>
+                <input id="telefono" name="telefono" type="tel" placeholder="+34 600 000 000" required autocomplete="tel" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="servicio-form">Servicio <abbr title="Obligatorio">*</abbr></label>
+              <select id="servicio-form" name="servicio" required>
+                <option value="">¿Qué necesitas?</option>
+                {content.serviceSummaries.map(s => (
+                  <option value={s.slug}>{s.nombre}</option>
+                ))}
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="mensaje-form">Cuéntanos más <span class="form-optional">(opcional)</span></label>
+              <textarea id="mensaje-form" name="mensaje" rows="3" placeholder="Tamaño aproximado, ciudad, urgencia…"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg btn-full">
+              Enviar solicitud de presupuesto →
+            </button>
+            <p class="form-legal">
+              Al enviar aceptas nuestra <a href="/privacidad/">política de privacidad</a>.
+            </p>
+          </form>
+        </div>
+
+        <!-- Datos de contacto -->
+        <aside class="cta-contact">
+          <h3>Contacto directo</h3>
+
+          <address class="cta-address">
+            <a href={`tel:${mainCiudad.telefono.replace(/\s/g,'')}`} class="cta-contact-item cta-contact-item--primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.01 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z"/>
+              </svg>
+              <div>
+                <span class="cta-contact-label">Llamar ahora</span>
+                <span class="cta-contact-value">{mainCiudad.telefono}</span>
+              </div>
+            </a>
+
+            <a
+              href={`https://wa.me/${siteConfig.whatsapp}?text=Hola%2C%20quiero%20un%20presupuesto%20para%20${encodeURIComponent(siteConfig.serviceType)}%20en%20${encodeURIComponent(siteConfig.mainCity)}`}
+              class="cta-contact-item"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                <path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.561 4.14 1.542 5.876L0 24l6.312-1.518A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.897 0-3.67-.502-5.2-1.376L3 22l1.395-4.698A9.956 9.956 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+              </svg>
+              <div>
+                <span class="cta-contact-label">WhatsApp</span>
+                <span class="cta-contact-value">Escríbenos ahora</span>
+              </div>
+            </a>
+
+            <div class="cta-contact-item cta-contact-item--info">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+              <div>
+                <span class="cta-contact-label">Dirección</span>
+                <span class="cta-contact-value">{mainCiudad.direccion}, {mainCiudad.codigoPostal} {mainCiudad.nombre}</span>
+              </div>
+            </div>
+
+            <div class="cta-contact-item cta-contact-item--info">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <div>
+                <span class="cta-contact-label">Horario</span>
+                <span class="cta-contact-value">{siteConfig.horarioTexto}</span>
+              </div>
+            </div>
+          </address>
+
+          <div class="cta-trust">
+            <div class="trust-item"><span aria-hidden="true">✓</span> Presupuesto gratuito en 24 h</div>
+            <div class="trust-item"><span aria-hidden="true">✓</span> Sin compromiso</div>
+            <div class="trust-item"><span aria-hidden="true">✓</span> Equipo propio certificado</div>
+            <div class="trust-item"><span aria-hidden="true">✓</span> {c(content.hero.badge3)}</div>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  /* ══════════════════════════════════════════════════════
+     SECCIONES BASE
+  ══════════════════════════════════════════════════════ */
+  .sec          { padding-block: 4.5rem; }
+  .sec--tint    { background: var(--c-bg-tint); }
+  .sec--dark    { background: var(--c-bg-dark); }
+  @media (max-width: 768px) { .sec { padding-block: 3rem; } }
+
+  .section-sub-dark {
+    color: rgba(255,255,255,.6);
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-top: .75rem;
+  }
+
+  /* ══════════════════════════════════════════════════════
+     HERO
+  ══════════════════════════════════════════════════════ */
+  .hero {
+    background: var(--c-hero-gradient);
+    padding-block: 5.5rem 0;
+    margin-top: var(--header-h);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 55% 60% at 75% 10%, rgba(0,100,255,.3) 0%, transparent 65%),
+      radial-gradient(ellipse 40% 40% at 15% 90%, rgba(80,80,200,.18) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .hero-inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    padding-bottom: 4.5rem;
+    position: relative;
+    z-index: 1;
+  }
+  @media (min-width: 920px) {
+    .hero-inner { grid-template-columns: 1fr 340px; align-items: center; gap: 4rem; }
+  }
+
+  .hero-text { color: #fff; }
+  .hero-eyebrow {
+    color: rgba(255,255,255,.9);
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.2);
+  }
+  .hero-text h1 { color: #fff; margin-block: .75rem 1rem; }
+  .hero-h1-accent {
+    background: linear-gradient(90deg, #93c5fd, #c4b5fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    font-size: 1.05rem;
+    color: rgba(255,255,255,.78);
+    line-height: 1.75;
+    max-width: 520px;
+    margin-bottom: 2rem;
+  }
+  .hero-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 480px) {
+    .hero-ctas { flex-direction: column; }
+    .hero-ctas .btn { width: 100%; justify-content: center; }
+  }
+  .hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+    list-style: none;
+  }
+  .hero-badges li {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .78rem;
+    font-weight: 500;
+    color: rgba(255,255,255,.88);
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 100px;
+    padding: .3rem .8rem;
+    white-space: nowrap;
+  }
+
+  .hero-ext-link {
+    margin-top: .75rem;
+    font-size: .78rem;
+    color: rgba(255,255,255,.55);
+  }
+  .hero-ext-link a {
+    color: rgba(255,255,255,.7);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .hero-ext-link a:hover { color: #fff; }
+
+  /* Tarjeta lateral del hero */
+  .hero-card {
+    background: rgba(255,255,255,.08);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: var(--r-xl);
+    padding: 1.75rem;
+    color: #fff;
+    box-shadow: 0 20px 50px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.05);
+  }
+  .hero-card-header {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .72rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.5);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(34,197,94,.25);
+    animation: pulse 2.5s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; box-shadow:0 0 0 3px rgba(34,197,94,.25); }
+    50%      { opacity:.7; box-shadow:0 0 0 7px rgba(34,197,94,.08); }
+  }
+  .hero-card-stat {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    line-height: 1;
+    color: #fff;
+  }
+  .hero-card-label { font-size: .82rem; color: rgba(255,255,255,.45); margin: .25rem 0 1.25rem; }
+  .hero-card-metrics {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: .5rem;
+    margin-bottom: 1.25rem;
+  }
+  .hero-card-metrics > div {
+    background: rgba(255,255,255,.08);
+    border-radius: 10px;
+    padding: .65rem .5rem;
+    text-align: center;
+  }
+  .hero-card-metrics strong { display:block; font-size:.95rem; font-weight:700; }
+  .hero-card-metrics span   { font-size:.66rem; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.04em; }
+  .hero-card-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,.1);
+    margin-bottom: 1rem;
+  }
+  .hero-card-caption { font-size:.68rem; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:.07em; margin-bottom:.6rem; }
+  .hero-card-cities  { display:flex; flex-wrap:wrap; gap:.3rem; }
+  .hero-card-cities span {
+    font-size:.73rem; font-weight:500;
+    background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:100px;
+    padding:.15rem .55rem;
+    color:rgba(255,255,255,.8);
+  }
+
+  /* Ola de transición hero → contenido */
+  .hero-wave { line-height: 0; position: relative; z-index: 1; }
+  .hero-wave svg { width: 100%; height: 80px; display: block; }
+
+  @media (max-width: 768px) {
+    .hero { padding-block: 4rem 0; }
+    .hero-inner { padding-bottom: 3.5rem; gap: 2rem; }
+    .hero-visual { display: none; }
+    /* Eyebrow largo: permitir salto de línea en móvil */
+    .hero-eyebrow { white-space: normal; text-align: center; }
+    /* H1: romper palabras largas si no caben */
+    .hero-text h1 { word-break: break-word; overflow-wrap: break-word; font-size: clamp(1.6rem, 7.5vw, 2.5rem); }
+    /* Párrafo de descripción: no cortar palabras */
+    .hero-sub { word-break: break-word; overflow-wrap: break-word; }
+    /* Botones CTA: envolver texto en móvil */
+    .hero-ctas .btn { white-space: normal; text-align: center; }
+    /* Badges: permitir salto de línea si son muy largos */
+    .hero-badges li { white-space: normal; max-width: 100%; }
+  }
+
+  /* ══════════════════════════════════════════════════════
+     BENEFICIOS
+  ══════════════════════════════════════════════════════ */
+  .benefits-grid {
+    list-style: none;
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 580px)  { .benefits-grid { grid-template-columns: repeat(2,1fr); } }
+  @media (min-width: 1000px) { .benefits-grid { grid-template-columns: repeat(3,1fr); } }
+
+  .benefit-card {
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    transition: box-shadow .2s, transform .2s, border-color .2s;
+  }
+  .benefit-card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,.09);
+    transform: translateY(-3px);
+    border-color: #bfdbfe;
+  }
+  .benefit-icon { width: 2.5rem; height: 2.5rem; color: var(--c-primary); }
+  .benefit-icon svg { width: 100%; height: 100%; }
+  .benefit-card h3 { font-size: .95rem; font-weight: 700; }
+  .benefit-card p { font-size: .875rem; color: var(--c-text-m); line-height: 1.65; margin: 0; flex: 1; }
+
+  /* ══════════════════════════════════════════════════════
+     SERVICIOS
+  ══════════════════════════════════════════════════════ */
+  .srv-grid-intro {
+    font-size: .9rem;
+    color: var(--c-text-m);
+    margin-bottom: 1.5rem;
+  }
+
+  .srv-grid {
+    list-style: none;
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px)  { .srv-grid { grid-template-columns: repeat(2,1fr); } }
+  @media (min-width: 1000px) { .srv-grid { grid-template-columns: repeat(3,1fr); } }
+
+  .srv-card {
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+    position: relative;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    transition: box-shadow .2s, transform .2s, border-color .2s;
+  }
+  .srv-card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,.09);
+    transform: translateY(-3px);
+    border-color: #bfdbfe;
+  }
+  .srv-card--featured {
+    border-color: var(--c-primary);
+    border-width: 2px;
+    background: var(--c-primary-l);
+    box-shadow: 0 4px 20px rgba(0,87,255,.12);
+  }
+  .srv-card--featured:hover {
+    box-shadow: 0 8px 30px rgba(0,87,255,.2);
+    border-color: var(--c-primary);
+  }
+  .srv-card-badge {
+    position: absolute;
+    top: -1px; right: 1.25rem;
+    background: var(--c-primary);
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: .2rem .75rem;
+    border-radius: 0 0 7px 7px;
+  }
+  .srv-icon { width: 2.5rem; height: 2.5rem; color: var(--c-primary); }
+  .srv-icon svg { width: 100%; height: 100%; }
+  .srv-card h3 { font-size: 1rem; font-weight: 700; }
+  .srv-card > p { font-size: .875rem; color: var(--c-text-m); line-height: 1.65; margin: 0; flex: 1; }
+  .srv-card--featured > p { color: var(--c-text); }
+  .srv-features { list-style: none; display: flex; flex-direction: column; gap: .35rem; margin-top: .1rem; }
+  .srv-features li {
+    font-size: .82rem;
+    color: var(--c-text-m);
+    padding-left: 1.1rem;
+    position: relative;
+  }
+  .srv-features li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--c-primary);
+    font-weight: 700;
+  }
+  .srv-card--featured .srv-features li { color: var(--c-text); }
+  .srv-card--featured .srv-features li::before { color: var(--c-primary); }
+
+  /* ══════════════════════════════════════════════════════
+     ZONA DE ACTUACIÓN
+  ══════════════════════════════════════════════════════ */
+  .zona-grid {
+    list-style: none;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2,1fr);
+    margin-bottom: 2.5rem;
+  }
+  @media (min-width: 640px)  { .zona-grid { grid-template-columns: repeat(3,1fr); } }
+  @media (min-width: 1000px) { .zona-grid { grid-template-columns: repeat(4,1fr); } }
+
+  .zona-card {
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    padding: 1rem 1.1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    transition: box-shadow .2s, border-color .2s, transform .2s;
+  }
+  .zona-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    border-color: #bfdbfe;
+    transform: translateY(-2px);
+  }
+  .zona-card-header {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .88rem;
+    font-weight: 700;
+    margin-bottom: .6rem;
+  }
+  .zona-card-header svg { width: 13px; height: 13px; color: var(--c-primary); flex-shrink: 0; }
+  .zona-services { list-style: none; display: flex; flex-direction: column; gap: .2rem; }
+  .zona-services a { font-size: .78rem; color: var(--c-text-m); transition: color .15s; }
+  .zona-services a::before { content: '→ '; opacity: .4; }
+  .zona-services a:hover { color: var(--c-primary); text-decoration: none; }
+
+  .zona-barrios { border-top: 1px solid var(--c-border); padding-top: 1.75rem; }
+  .zona-barrios-label {
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--c-text-m);
+    margin-bottom: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .zona-tags { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; }
+  .zona-tags li {
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: 20px;
+    padding: .25rem .8rem;
+    font-size: .8rem;
+    color: var(--c-text-m);
+  }
+
+  /* ══════════════════════════════════════════════════════
+     PROCESO
+  ══════════════════════════════════════════════════════ */
+  .proceso-steps {
+    list-style: none;
+    display: grid;
+    gap: 2rem;
+    max-width: 880px;
+    margin-inline: auto;
+  }
+  @media (min-width: 640px) { .proceso-steps { grid-template-columns: repeat(2,1fr); gap: 2rem 3rem; } }
+
+  .proceso-steps li {
+    display: flex;
+    gap: 1.1rem;
+    align-items: flex-start;
+  }
+  .proceso-num {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--c-primary);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: .95rem;
+    box-shadow: 0 4px 12px rgba(0,87,255,.3);
+  }
+  .proceso-content h3 { font-size: .95rem; font-weight: 700; margin-bottom: .4rem; }
+  .proceso-content p  { font-size: .875rem; color: var(--c-text-m); line-height: 1.65; margin: 0; }
+
+  /* ══════════════════════════════════════════════════════
+     TESTIMONIOS
+  ══════════════════════════════════════════════════════ */
+  .testimonios-track {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (max-width: 640px) {
+    .testimonios-track {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+  @media (min-width: 900px) {
+    .testimonios-track { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  .testimonio-card {
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: var(--r-lg);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: background .2s, border-color .2s;
+  }
+  .testimonio-card:hover {
+    background: rgba(255,255,255,.11);
+    border-color: rgba(255,255,255,.22);
+  }
+  .testimonio-stars { color: #fbbf24; font-size: .95rem; letter-spacing: .08em; }
+  .testimonio-card blockquote { margin: 0; flex: 1; }
+  .testimonio-card blockquote p {
+    font-size: .875rem;
+    color: rgba(255,255,255,.78);
+    line-height: 1.7;
+    font-style: italic;
+  }
+  .testimonio-card footer {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,.1);
+  }
+  .testimonio-avatar {
+    flex-shrink: 0;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--c-primary), #7c3aed);
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .testimonio-nombre { display: block; font-style: normal; font-weight: 600; font-size: .88rem; color: #fff; }
+  .testimonio-lugar  { font-size: .75rem; color: rgba(255,255,255,.45); }
+  /* Ocultar el hint de scroll (ya no hay scroll horizontal) */
+  .testimonio-hint { display: none; }
+
+  /* ══════════════════════════════════════════════════════
+     PRECIOS
+  ══════════════════════════════════════════════════════ */
+  .precios-grid {
+    list-style: none;
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: 1fr;
+    max-width: 880px;
+    margin-inline: auto;
+    align-items: start;
+  }
+  @media (min-width: 640px) {
+    .precios-grid {
+      grid-template-columns: repeat(3,1fr);
+      align-items: stretch;
+    }
+  }
+
+  .precio-card {
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    transition: box-shadow .2s, transform .2s;
+  }
+  .precio-card:hover {
+    box-shadow: 0 6px 24px rgba(0,0,0,.1);
+    transform: translateY(-3px);
+  }
+
+  .precio-card--highlight {
+    background: var(--c-primary);
+    border-color: var(--c-primary);
+    color: #fff;
+    box-shadow: 0 8px 32px rgba(0,87,255,.35);
+    padding-top: 2.5rem;
+  }
+  .precio-card--highlight:hover {
+    box-shadow: 0 12px 40px rgba(0,87,255,.45);
+    transform: translateY(-3px);
+  }
+
+  .precio-badge {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    background: #fbbf24;
+    color: #1a1a2e;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: .3rem .9rem;
+    border-radius: 0 0 8px 8px;
+    white-space: nowrap;
+  }
+  .precio-tipo {
+    font-size: .82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--c-text-m);
+  }
+  .precio-card--highlight .precio-tipo { color: rgba(255,255,255,.75); }
+  .precio-desde { font-size: .75rem; color: var(--c-text-l); }
+  .precio-card--highlight .precio-desde { color: rgba(255,255,255,.55); }
+  .precio-valor {
+    font-size: 2.75rem;
+    font-weight: 800;
+    color: var(--c-text);
+    letter-spacing: -.04em;
+    line-height: 1;
+  }
+  .precio-card--highlight .precio-valor { color: #fff; }
+  .precio-incl {
+    list-style: none;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+    flex: 1;
+  }
+  .precio-incl li {
+    font-size: .82rem;
+    color: var(--c-text-m);
+    padding-left: 1.15rem;
+    position: relative;
+    line-height: 1.4;
+  }
+  .precio-incl li::before { content: '✓'; position: absolute; left: 0; color: var(--c-primary); font-weight: 700; }
+  .precio-card--highlight .precio-incl li { color: rgba(255,255,255,.88); }
+  .precio-card--highlight .precio-incl li::before { color: #fbbf24; }
+  .btn-full { width: 100%; justify-content: center; }
+  .precios-aviso {
+    text-align: center;
+    font-size: .78rem;
+    color: var(--c-text-l);
+    margin-top: 1.5rem;
+    max-width: 620px;
+    margin-inline: auto;
+  }
+
+  /* ══════════════════════════════════════════════════════
+     FAQ
+  ══════════════════════════════════════════════════════ */
+  .faq-list {
+    max-width: 760px;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+  .faq-item {
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    transition: box-shadow .2s, border-color .2s;
+  }
+  .faq-item:hover { border-color: #bfdbfe; }
+  .faq-item[open] {
+    box-shadow: 0 2px 12px rgba(0,0,0,.07);
+    border-color: #bfdbfe;
+  }
+  .faq-item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.4rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: .92rem;
+    list-style: none;
+    user-select: none;
+    background: var(--c-bg);
+    transition: background .15s;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary:hover { background: var(--c-bg-tint); }
+  .faq-item[open] summary { background: var(--c-primary-l); color: var(--c-primary); }
+  .faq-chevron { flex-shrink: 0; width: 18px; height: 18px; transition: transform .25s; color: var(--c-text-l); }
+  .faq-item[open] .faq-chevron { transform: rotate(180deg); color: var(--c-primary); }
+  .faq-item p {
+    padding: 1rem 1.4rem 1.25rem;
+    font-size: .9rem;
+    color: var(--c-text-m);
+    line-height: 1.7;
+    border-top: 1px solid var(--c-border);
+    margin: 0;
+    background: var(--c-bg);
+  }
+
+  /* ══════════════════════════════════════════════════════
+     CTA FINAL + CONTACTO
+  ══════════════════════════════════════════════════════ */
+  .cta-final { scroll-margin-top: var(--header-h); }
+
+  .cta-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+  @media (min-width: 860px) { .cta-grid { grid-template-columns: 1.3fr 1fr; gap: 4rem; } }
+
+  .cta-form-wrap h2 {
+    color: #fff;
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    margin-bottom: .5rem;
+  }
+  .cta-form-sub {
+    color: rgba(255,255,255,.6);
+    font-size: .95rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .cta-form { display: flex; flex-direction: column; gap: 1rem; }
+  .form-row { display: grid; gap: 1rem; }
+  @media (min-width: 480px) { .form-row { grid-template-columns: 1fr 1fr; } }
+  .form-group { display: flex; flex-direction: column; gap: .35rem; }
+  .form-group label { font-size: .82rem; font-weight: 600; color: rgba(255,255,255,.8); }
+  .form-group label abbr { text-decoration: none; color: #93c5fd; margin-inline-start: .15rem; }
+  .form-optional { font-weight: 400; color: rgba(255,255,255,.35); }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-family: var(--font);
+    font-size: .92rem;
+    color: var(--c-text);
+    background: #fff;
+    border: 1.5px solid rgba(255,255,255,.15);
+    border-radius: var(--r-sm);
+    padding: .7rem .9rem;
+    width: 100%;
+    outline: none;
+    appearance: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .form-group textarea { resize: vertical; min-height: 90px; }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(147,197,253,.2);
+  }
+  .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2394a3b8'%3E%3Cpath d='M5 8l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .75rem center;
+    background-size: 16px;
+    padding-right: 2.5rem;
+    cursor: pointer;
+    background-color: #fff;
+  }
+  .form-legal {
+    font-size: .72rem;
+    color: rgba(255,255,255,.3);
+    text-align: center;
+    line-height: 1.5;
+  }
+  .form-legal a { color: rgba(255,255,255,.4); text-decoration: underline; }
+
+  /* Contacto lateral */
+  .cta-contact h3 { color: #fff; font-size: 1.05rem; font-weight: 700; margin-bottom: 1.25rem; }
+  .cta-address {
+    font-style: normal;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .cta-contact-item {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: var(--r-md);
+    padding: .85rem 1rem;
+    text-decoration: none;
+    transition: background .15s, border-color .15s;
+  }
+  .cta-contact-item:hover {
+    background: rgba(255,255,255,.12);
+    border-color: rgba(255,255,255,.22);
+    text-decoration: none;
+  }
+  .cta-contact-item--primary {
+    border-color: rgba(147,197,253,.35);
+    background: rgba(0,87,255,.22);
+  }
+  .cta-contact-item--primary:hover {
+    background: rgba(0,87,255,.32);
+  }
+  .cta-contact-item--info { cursor: default; }
+  .cta-contact-item svg { flex-shrink: 0; width: 20px; height: 20px; color: #93c5fd; }
+  .cta-contact-label {
+    display: block;
+    font-size: .68rem;
+    color: rgba(255,255,255,.4);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+  }
+  .cta-contact-value {
+    display: block;
+    font-size: .9rem;
+    font-weight: 600;
+    color: #fff;
+    margin-top: .1rem;
+  }
+
+  .cta-trust {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .5rem;
+  }
+  .trust-item {
+    font-size: .8rem;
+    color: rgba(255,255,255,.5);
+    display: flex;
+    align-items: flex-start;
+    gap: .4rem;
+    line-height: 1.4;
+  }
+  .trust-item span { color: #4ade80; font-weight: 700; flex-shrink: 0; }
+
+  /* Accesibilidad — honeypot */
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+</style>

@@ -1,0 +1,205 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FAQSchema from '../components/FAQSchema.astro';
+import BreadcrumbSchema from '../components/BreadcrumbSchema.astro';
+import { ciudades, EMPRESA } from '../data/index';
+import { siteConfig } from '../config/site';
+import { content as rawContent } from '../config/content';
+
+const ciudad    = ciudades[0].nombre;
+const canonical = `${siteConfig.web}/faq/`;
+
+const rc = (str: string) => str.replace(/\{\{city\}\}/g, ciudad);
+function deepC(obj: any): any {
+  if (typeof obj === 'string') return rc(obj);
+  if (Array.isArray(obj)) return obj.map(deepC);
+  if (obj && typeof obj === 'object') return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, deepC(v)]));
+  return obj;
+}
+const content = deepC(rawContent);
+
+const title       = `Preguntas frecuentes | ${EMPRESA.nombre}`;
+const description = `Resolvemos las dudas más habituales sobre ${siteConfig.serviceType} en ${ciudades.map(c=>c.nombre).join(', ')}: presupuesto, plazos, urgencias y zonas de cobertura.`;
+
+const faqs = content.faqs;
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <FAQSchema faqs={faqs} slot="head" />
+  <BreadcrumbSchema
+    items={[
+      { name: 'Inicio',               url: `${siteConfig.web}/` },
+      { name: 'Preguntas frecuentes', url: canonical },
+    ]}
+    slot="head"
+  />
+
+  <div class="page-header">
+    <div class="container">
+      <span class="eyebrow">Preguntas frecuentes · {ciudad}</span>
+      <h1>Resolvemos tus dudas sobre {siteConfig.serviceType} en {ciudad}</h1>
+      <p class="page-header-sub">
+        Todo lo que necesitas saber antes de contratar nuestros servicios en {ciudad}.
+        ¿No encuentras tu pregunta? <a href="/contacto">Escríbenos directamente</a>.
+      </p>
+    </div>
+  </div>
+
+  <section class="page-section" aria-labelledby="faq-lista-heading">
+    <div class="container">
+      <h2 id="faq-lista-heading" class="faq-section-heading">Preguntas frecuentes sobre {siteConfig.serviceType} en {ciudad}</h2>
+      <div class="faq-list">
+        {faqs.map((faq, i) => (
+          <details class="faq-item" open={i === 0 || undefined}>
+            <summary>
+              <span>{faq.pregunta}</span>
+              <span class="faq-chevron" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 8l5 5 5-5"/>
+                </svg>
+              </span>
+            </summary>
+            <p>{faq.respuesta}</p>
+          </details>
+        ))}
+      </div>
+
+      <div class="faq-links">
+        <p>Explora todos nuestros <a href="/servicios/">servicios de {siteConfig.serviceType} en {ciudad}</a> o consulta directamente el servicio que necesitas:</p>
+        <ul class="faq-srv-links">
+          {ciudades[0].servicios.map(s => (
+            <li>
+              <a href={`/${ciudades[0].slug}/${s.slug}/`}>{s.nombre} en {ciudades[0].nombre}</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="faq-cta">
+        <p>¿Tienes alguna pregunta que no aparece aquí?</p>
+        <a href="/contacto" class="btn btn-primary btn-lg">Contáctanos →</a>
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  .page-header {
+    margin-top: var(--header-h);
+    background: var(--c-hero-gradient);
+    padding-block: 4.5rem 3.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+  }
+  .page-header::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 55% 60% at 75% 15%, rgba(0,100,255,.3) 0%, transparent 65%),
+      radial-gradient(ellipse 35% 40% at 15% 85%, rgba(80,80,200,.15) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .page-header .container { position: relative; z-index: 1; }
+  .page-header .eyebrow {
+    color: rgba(255,255,255,.9);
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.2);
+  }
+  .page-header h1 { color: #fff; margin-bottom: .75rem; margin-top: .5rem; }
+  .page-header-sub {
+    color: rgba(255,255,255,.72);
+    font-size: 1rem;
+    max-width: 580px;
+    margin-inline: auto;
+    line-height: 1.7;
+  }
+  .page-header-sub a { color: #93c5fd; }
+
+  .faq-section-heading {
+    font-size: 1.3rem;
+    margin-bottom: 1.75rem;
+    color: var(--c-text);
+  }
+
+  .faq-list {
+    max-width: 780px;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+  }
+
+  .faq-item {
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    transition: box-shadow .2s;
+  }
+  .faq-item[open] { box-shadow: var(--sh-card); }
+
+  .faq-item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.2rem 1.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: .95rem;
+    list-style: none;
+    user-select: none;
+    background: var(--c-bg);
+    transition: background .15s;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary:hover                   { background: var(--c-bg-tint); }
+  .faq-item[open] summary                   { background: var(--c-primary-l); color: var(--c-primary); }
+
+  .faq-chevron { flex-shrink: 0; width: 20px; height: 20px; transition: transform .25s; }
+  .faq-item[open] .faq-chevron { transform: rotate(180deg); }
+  .faq-chevron svg { width: 100%; height: 100%; }
+
+  .faq-item p {
+    padding: 1.1rem 1.5rem 1.35rem;
+    font-size: .93rem;
+    color: var(--c-text-m);
+    line-height: 1.7;
+    border-top: 1px solid var(--c-border);
+  }
+
+  .faq-links {
+    margin-top: 2rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--c-primary-l);
+    border: 1px solid #bfdbfe;
+    border-radius: var(--r-md);
+    font-size: .9rem;
+    color: var(--c-text-m);
+    line-height: 1.7;
+  }
+  .faq-links a { color: var(--c-primary); font-weight: 500; }
+  .faq-links a:hover { text-decoration: underline; }
+  .faq-srv-links { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem .75rem; margin-top: .65rem; }
+  .faq-srv-links li::before { content: '→ '; color: var(--c-primary); font-weight: 700; }
+
+  .faq-cta {
+    text-align: center;
+    margin-top: 3rem;
+    padding: 2.5rem;
+    background: var(--c-bg-tint);
+    border-radius: var(--r-xl);
+    border: 1px solid var(--c-border);
+  }
+  .faq-cta p { color: var(--c-text-m); margin-bottom: 1.25rem; font-size: 1.05rem; }
+</style>

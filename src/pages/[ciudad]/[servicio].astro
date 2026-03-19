@@ -1,0 +1,363 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FAQSchema from '../../components/FAQSchema.astro';
+import BreadcrumbSchema from '../../components/BreadcrumbSchema.astro';
+import LocalBusinessSchema from '../../components/LocalBusinessSchema.astro';
+import HowToSchema from '../../components/HowToSchema.astro';
+import ServiceSchema from '../../components/ServiceSchema.astro';
+import {
+  ciudades,
+  EMPRESA,
+  otrosServiciosEnCiudad,
+  mismosServicioOtrasCiudades,
+} from '../../data/index';
+import { siteConfig } from '../../config/site';
+
+export async function getStaticPaths() {
+  const paths: { params: { ciudad: string; servicio: string } }[] = [];
+  for (const ciudad of ciudades) {
+    for (const servicio of ciudad.servicios) {
+      paths.push({ params: { ciudad: ciudad.slug, servicio: servicio.slug } });
+    }
+  }
+  return paths;
+}
+
+const { ciudad: ciudadSlug, servicio: servicioSlug } = Astro.params;
+
+const ciudad   = ciudades.find(c => c.slug === ciudadSlug)!;
+const servicio = ciudad.servicios.find(s => s.slug === servicioSlug)!;
+
+// Interpolar variables en los textos del servicio
+function ip(text: string) {
+  return text
+    .replace(/\{ciudad\}/g,    ciudad.nombre)
+    .replace(/\{provincia\}/g, ciudad.provincia)
+    .replace(/\{empresa\}/g,   EMPRESA.nombre);
+}
+function ipArr(arr: string[]) { return arr.map(ip); }
+function cap(text: string) { return text.charAt(0).toUpperCase() + text.slice(1); }
+
+const canonical = `${siteConfig.web}/${ciudadSlug}/${servicioSlug}/`;
+
+// Fórmula del título (misma que index, adaptada a página de servicio)
+const _sn = cap(servicio.nombre);
+const _cn = ciudad.nombre;
+const _bn = EMPRESA.nombre;
+const titleFormulas: Record<number, string> = {
+  1: `${_sn} en ${_cn} | ${_bn}`,
+  2: `${_bn} — ${_sn} en ${_cn}`,
+  3: `${_sn} en ${_cn} ✓ ${_bn}`,
+  4: `${_sn} · ${_cn} | ${_bn} — Expertos locales`,
+};
+const title = titleFormulas[siteConfig.titleFormula ?? 1] ?? titleFormulas[1];
+const description = `${ip(servicio.descripcionCorta)} Presupuesto gratis. Llama al ${ciudad.telefono}.`;
+
+// Interlinking
+const otrosServicios    = otrosServiciosEnCiudad(ciudadSlug, servicioSlug);
+const otrasCiudades     = mismosServicioOtrasCiudades(servicioSlug, ciudadSlug);
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <FAQSchema faqs={servicio.faqs.map(f => ({ pregunta: ip(f.pregunta), respuesta: ip(f.respuesta) }))} slot="head" />
+  <BreadcrumbSchema
+    items={[
+      { name: 'Inicio',           url: `${siteConfig.web}/` },
+      { name: ciudad.nombre,      url: `${siteConfig.web}/${ciudadSlug}/` },
+      { name: servicio.nombre,    url: canonical },
+    ]}
+    slot="head"
+  />
+  <LocalBusinessSchema ciudad={ciudad} servicio={servicio} url={canonical} slot="head" />
+  <HowToSchema
+    nombre={`Cómo realizamos ${ip(servicio.nombre).toLowerCase()} en ${ciudad.nombre}`}
+    descripcion={ip(servicio.descripcionCorta)}
+    pasos={servicio.proceso.map(p => ({ titulo: ip(p.titulo), descripcion: ip(p.descripcion) }))}
+    slot="head"
+  />
+  <ServiceSchema
+    nombre={ip(servicio.nombre)}
+    descripcion={ip(servicio.descripcionLarga)}
+    ciudad={ciudad.nombre}
+    provincia={ciudad.provincia}
+    url={canonical}
+    telefono={ciudad.telefono}
+    slot="head"
+  />
+
+  <!-- ── Page header ── -->
+  <div class="page-header">
+    <div class="container">
+      <span class="eyebrow">{siteConfig.serviceType} · {ciudad.nombre}</span>
+      <h1>{cap(servicio.nombre)} en {ciudad.nombre}</h1>
+      <p class="page-header-sub">{ip(servicio.descripcionCorta)}</p>
+      <div class="header-ctas">
+        <a href="/contacto" class="btn btn-white btn-lg">Presupuesto gratis →</a>
+        <a
+          href={`https://wa.me/${EMPRESA.whatsapp}?text=${encodeURIComponent(`Hola, necesito información sobre ${servicio.nombre} en ${ciudad.nombre}`)}`}
+          class="btn btn-whatsapp btn-lg"
+          target="_blank" rel="noopener noreferrer"
+        >💬 WhatsApp</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Descripción + beneficios ── -->
+  <section class="page-section" aria-labelledby="desc-heading">
+    <div class="container layout-2col">
+      <div class="desc-col">
+        <h2 id="desc-heading">¿En qué consiste el servicio de {servicio.nombre.toLowerCase()} en {ciudad.nombre}?</h2>
+        <p class="desc-text">{ip(servicio.descripcionLarga)}</p>
+
+        {ciudad.zonas.length > 0 && (
+          <div class="zonas-box">
+            <h3>Zonas de {ciudad.nombre} donde trabajamos</h3>
+            <p class="zonas-list">{ciudad.zonas.join(' · ')}</p>
+          </div>
+        )}
+      </div>
+
+      <aside class="benefits-col">
+        <h3>¿Por qué elegir {EMPRESA.nombre}?</h3>
+        <ul class="benefits-list">
+          {ipArr(servicio.beneficios).map(b => (
+            <li>
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="2.5 8.5 6.5 12.5 13.5 4.5"/>
+              </svg>
+              {b}
+            </li>
+          ))}
+        </ul>
+        <a href="/contacto" class="btn btn-primary btn-full">Solicitar presupuesto →</a>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ── Proceso ── -->
+  <section class="page-section page-section--tinted" aria-labelledby="proceso-heading">
+    <div class="container">
+      <div class="section-header">
+        <h2 id="proceso-heading">Cómo realizamos el {servicio.nombre.toLowerCase()} en {ciudad.nombre}</h2>
+        <p class="section-sub">Un proceso claro y transparente desde el primer contacto hasta la entrega.</p>
+      </div>
+      <ol class="process-steps">
+        {servicio.proceso.map((paso, i) => (
+          <li>
+            <span class="step-num">{i + 1}</span>
+            <div>
+              <h3>{ip(paso.titulo)}</h3>
+              <p>{ip(paso.descripcion)}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- ── FAQs ── -->
+  <section class="page-section" aria-labelledby="faq-heading">
+    <div class="container">
+      <div class="section-header">
+        <h2 id="faq-heading">Preguntas frecuentes sobre {servicio.nombre.toLowerCase()} en {ciudad.nombre}</h2>
+      </div>
+      <div class="faq-list" style="max-width:780px;margin-inline:auto">
+        {servicio.faqs.map((faq, i) => (
+          <details class="faq-item" open={i === 0 || undefined}>
+            <summary>
+              <span>{ip(faq.pregunta)}</span>
+              <span class="faq-chevron" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg>
+              </span>
+            </summary>
+            <p>{ip(faq.respuesta)}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Interlinking: otros servicios en esta ciudad ── -->
+  {otrosServicios.length > 0 && (
+    <section class="page-section page-section--tinted" aria-labelledby="otros-servicios-heading">
+      <div class="container">
+        <h2 id="otros-servicios-heading">Otros servicios de {siteConfig.serviceType} en {ciudad.nombre}</h2>
+        <p class="section-sub">También ofrecemos estos servicios en {ciudad.nombre} y su comarca.</p>
+        <ul class="interlink-grid">
+          {otrosServicios.map(s => (
+            <li>
+              <a href={s.href} class="interlink-card">
+                <span class="interlink-title">{cap(s.nombre)} en {ciudad.nombre}</span>
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4"/>
+                </svg>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <!-- ── Interlinking: mismo servicio en otras ciudades ── -->
+  {otrasCiudades.length > 0 && (
+    <section class="page-section" aria-labelledby="otras-ciudades-heading">
+      <div class="container">
+        <h2 id="otras-ciudades-heading">{cap(servicio.nombre)} en otras ciudades</h2>
+        <p class="section-sub">Prestamos el servicio de {servicio.nombre.toLowerCase()} también en estos municipios.</p>
+        <ul class="interlink-grid">
+          {otrasCiudades.map(c => (
+            <li>
+              <a href={c.href} class="interlink-card">
+                <span class="interlink-title">{cap(servicio.nombre)} en {c.ciudad}</span>
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4"/>
+                </svg>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <!-- ── CTA final ── -->
+  <section class="page-section srv-cta-section" aria-label="Llamada a la acción">
+    <div class="container">
+      <div class="srv-cta-box">
+        <div class="srv-cta-text">
+          <h2>¿Necesitas {servicio.nombre.toLowerCase()} en {ciudad.nombre}?</h2>
+          <p>Presupuesto gratuito y sin compromiso. Respondemos en menos de 2 horas.</p>
+        </div>
+        <div class="srv-cta-btns">
+          <a href="/contacto" class="btn btn-white btn-lg">Solicitar presupuesto →</a>
+          <a
+            href={`https://wa.me/${EMPRESA.whatsapp}?text=${encodeURIComponent(`Hola, necesito información sobre ${servicio.nombre} en ${ciudad.nombre}`)}`}
+            class="btn btn-whatsapp btn-lg"
+            target="_blank" rel="noopener noreferrer"
+          >💬 WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  .page-header {
+    margin-top: var(--header-h);
+    background: var(--c-hero-gradient);
+    padding-block: 4.5rem 3.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+  }
+  .page-header::after {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 55% 60% at 75% 15%, rgba(0,100,255,.3) 0%, transparent 65%),
+      radial-gradient(ellipse 35% 40% at 15% 85%, rgba(80,80,200,.15) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .page-header .container { position: relative; z-index: 1; }
+  .page-header .eyebrow { color: rgba(255,255,255,.9); background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); }
+  .page-header h1 { color: #fff; margin-bottom: .75rem; margin-top: .5rem; }
+  .page-header-sub { color: rgba(255,255,255,.72); font-size: 1rem; max-width: 580px; margin-inline: auto; line-height: 1.7; margin-bottom: 1.75rem; }
+  .header-ctas { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+
+  /* ── 2-col layout ── */
+  .layout-2col { display: grid; gap: 3rem; }
+  @media (min-width: 900px) { .layout-2col { grid-template-columns: 1fr 380px; } }
+
+  .desc-col h2 { font-size: 1.35rem; margin-bottom: 1rem; }
+  .desc-text { font-size: .95rem; color: var(--c-text-m); line-height: 1.8; }
+
+  .zonas-box {
+    margin-top: 1.75rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--c-bg-tint);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+  }
+  .zonas-box h3 { font-size: .95rem; margin-bottom: .5rem; }
+  .zonas-list { font-size: .85rem; color: var(--c-text-m); line-height: 1.7; margin: 0; }
+
+  .benefits-col {
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    padding: 1.75rem;
+    align-self: start;
+    position: sticky;
+    top: calc(var(--header-h) + 1.5rem);
+  }
+  .benefits-col h3 { font-size: 1.05rem; margin-bottom: 1rem; }
+  .benefits-list { list-style: none; display: flex; flex-direction: column; gap: .65rem; margin-bottom: 1.5rem; }
+  .benefits-list li { display: flex; align-items: flex-start; gap: .55rem; font-size: .875rem; line-height: 1.5; }
+  .benefits-list svg { flex-shrink: 0; width: 16px; height: 16px; color: var(--c-primary); margin-top: .1rem; }
+  .btn-full { width: 100%; text-align: center; }
+
+  /* ── Process ── */
+  .process-steps { list-style: none; display: grid; gap: 1.5rem; max-width: 900px; margin-inline: auto; }
+  @media (min-width: 640px) { .process-steps { grid-template-columns: 1fr 1fr; } }
+  .process-steps li { display: flex; gap: 1rem; align-items: flex-start; }
+  .step-num { flex-shrink: 0; width: 2.2rem; height: 2.2rem; background: var(--c-primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .9rem; }
+  .process-steps h3 { font-size: .95rem; font-weight: 700; margin-bottom: .3rem; }
+  .process-steps p { font-size: .875rem; color: var(--c-text-m); line-height: 1.65; margin: 0; }
+
+  /* ── FAQ ── */
+  .faq-item { border: 1px solid var(--c-border); border-radius: var(--r-md); overflow: hidden; transition: box-shadow .2s; margin-bottom: .75rem; }
+  .faq-item[open] { box-shadow: var(--sh-card); }
+  .faq-item summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.2rem 1.5rem; cursor: pointer; font-weight: 600; font-size: .95rem; list-style: none; user-select: none; background: var(--c-bg); transition: background .15s; }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary:hover { background: var(--c-bg-tint); }
+  .faq-item[open] summary { background: var(--c-primary-l); color: var(--c-primary); }
+  .faq-chevron { flex-shrink: 0; width: 20px; height: 20px; transition: transform .25s; }
+  .faq-item[open] .faq-chevron { transform: rotate(180deg); }
+  .faq-chevron svg { width: 100%; height: 100%; }
+  .faq-item p { padding: 1.1rem 1.5rem 1.35rem; font-size: .93rem; color: var(--c-text-m); line-height: 1.7; border-top: 1px solid var(--c-border); }
+
+  /* ── Interlinking grids ── */
+  .interlink-grid {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: .65rem;
+    margin-top: 1.25rem;
+  }
+  .interlink-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .85rem 1.1rem;
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    text-decoration: none;
+    color: var(--c-text);
+    font-size: .875rem;
+    font-weight: 500;
+    transition: border-color .15s, box-shadow .15s, color .15s;
+  }
+  .interlink-card:hover { border-color: var(--c-primary); color: var(--c-primary); box-shadow: 0 2px 8px rgba(0,87,255,.08); text-decoration: none; }
+  .interlink-card svg { flex-shrink: 0; width: 16px; height: 16px; opacity: .4; }
+  .interlink-title { flex: 1; }
+
+  /* ── CTA final ── */
+  .srv-cta-section { padding-bottom: 4rem; }
+  .srv-cta-box { background: linear-gradient(135deg, var(--c-primary) 0%, #0040c8 100%); border-radius: var(--r-xl); padding: 3rem 2.5rem; display: flex; flex-wrap: wrap; gap: 2rem; align-items: center; justify-content: space-between; }
+  .srv-cta-text h2 { color: #fff; font-size: 1.5rem; margin-bottom: .5rem; }
+  .srv-cta-text p  { color: rgba(255,255,255,.8); font-size: 1rem; margin: 0; }
+  .srv-cta-btns { display: flex; flex-wrap: wrap; gap: .75rem; }
+  .btn-white { display: inline-block; padding: .75rem 1.5rem; border-radius: 7px; font-weight: 700; font-size: .95rem; text-decoration: none; background: #fff; color: var(--c-primary); transition: filter .15s; }
+  .btn-white:hover { filter: brightness(.96); text-decoration: none; }
+</style>

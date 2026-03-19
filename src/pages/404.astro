@@ -1,0 +1,132 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { ciudades, EMPRESA } from '../data/index';
+import { siteConfig } from '../config/site';
+
+const title       = `Página no encontrada | ${EMPRESA.nombre}`;
+const description = `La página que buscas no existe. Vuelve al inicio o consulta nuestros servicios de ${siteConfig.serviceType} en ${ciudades[0].nombre}.`;
+const ciudad      = ciudades[0];
+---
+
+<BaseLayout title={title} description={description}>
+
+  <div class="not-found-wrap">
+    <div class="container not-found-inner">
+
+      <span class="not-found-code" aria-hidden="true">404</span>
+      <h1>Página no encontrada</h1>
+      <p class="not-found-sub">
+        Lo sentimos, esta página no existe o ha sido movida.<br />
+        Puedes volver al inicio o buscar el servicio que necesitas en {ciudad.nombre}.
+      </p>
+
+      <div class="not-found-ctas">
+        <a href="/" class="btn btn-primary btn-lg">← Volver al inicio</a>
+        <a href="/servicios/" class="btn btn-outline btn-lg">Ver todos los servicios</a>
+      </div>
+
+      {ciudad.servicios.length > 0 && (
+        <div class="not-found-links">
+          <p>Servicios disponibles en {ciudad.nombre}:</p>
+          <ul>
+            {ciudad.servicios.map(s => (
+              <li>
+                <a href={`/${ciudad.slug}/${s.slug}/`}>{s.nombre} en {ciudad.nombre}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+    </div>
+  </div>
+
+</BaseLayout>
+
+<style>
+  .not-found-wrap {
+    margin-top: var(--header-h);
+    min-height: calc(70vh - var(--header-h));
+    display: flex;
+    align-items: center;
+    padding-block: 5rem;
+  }
+
+  .not-found-inner {
+    text-align: center;
+    max-width: 560px;
+  }
+
+  .not-found-code {
+    display: block;
+    font-size: clamp(5rem, 15vw, 9rem);
+    font-weight: 800;
+    color: var(--c-primary-l);
+    line-height: 1;
+    letter-spacing: -.04em;
+    margin-bottom: .5rem;
+  }
+
+  h1 { margin-bottom: 1rem; }
+
+  .not-found-sub {
+    color: var(--c-text-m);
+    font-size: 1rem;
+    line-height: 1.75;
+    margin-bottom: 2rem;
+  }
+
+  .not-found-ctas {
+    display: flex;
+    gap: .75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 3rem;
+  }
+
+  .not-found-links {
+    background: var(--c-bg-tint);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    padding: 1.5rem;
+    text-align: left;
+  }
+
+  .not-found-links p {
+    font-size: .875rem;
+    font-weight: 600;
+    color: var(--c-text-m);
+    margin-bottom: .75rem;
+  }
+
+  .not-found-links ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+  }
+
+  .not-found-links a {
+    font-size: .875rem;
+    color: var(--c-primary);
+    font-weight: 500;
+  }
+
+  .not-found-links a::before {
+    content: '→ ';
+    opacity: .6;
+  }
+
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    padding: .8rem 1.75rem;
+    border-radius: var(--r-sm);
+    font-weight: 600;
+    font-size: 1rem;
+    border: 2px solid var(--c-primary);
+    color: var(--c-primary);
+    transition: background .15s;
+  }
+  .btn-outline:hover { background: var(--c-primary-l); text-decoration: none; }
+</style>

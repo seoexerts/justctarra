@@ -1,0 +1,56 @@
+---
+import { EMPRESA } from '../data/empresa';
+import { siteConfig } from '../config/site';
+
+interface Props {
+  nombre: string;
+  descripcion: string;
+  ciudad: string;
+  provincia: string;
+  url: string;
+  telefono: string;
+}
+
+const { nombre, descripcion, ciudad, provincia, url, telefono } = Astro.props;
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  name: `${nombre} en ${ciudad}`,
+  serviceType: nombre,
+  description: descripcion,
+  url,
+  image: `${siteConfig.web}${EMPRESA.logo}`,
+  priceRange: siteConfig.priceRange,
+  offers: {
+    '@type': 'Offer',
+    url,
+    priceCurrency: 'EUR',
+    availability: 'https://schema.org/InStock',
+    seller: {
+      '@type': siteConfig.schemaType ?? 'LocalBusiness',
+      name: EMPRESA.nombre,
+      telephone: telefono,
+    },
+  },
+  provider: {
+    '@type': siteConfig.schemaType ?? 'LocalBusiness',
+    name: EMPRESA.nombre,
+    legalName: EMPRESA.nombreLegal,
+    telephone: telefono,
+    url: siteConfig.web,
+    image: `${siteConfig.web}${EMPRESA.logo}`,
+  },
+  areaServed: [
+    { '@type': 'City',  name: ciudad },
+    { '@type': 'State', name: provincia },
+  ],
+  availableChannel: {
+    '@type': 'ServiceChannel',
+    serviceUrl: url,
+    servicePhone: telefono,
+  },
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(schema)} />

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://justclean.es/sitemap-index.xml

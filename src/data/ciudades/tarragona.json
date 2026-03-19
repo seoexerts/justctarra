@@ -1,0 +1,205 @@
+{
+  "slug": "tarragona",
+  "nombre": "Tarragona",
+  "provincia": "Tarragona",
+  "lat": 41.11845813011893,
+  "lng": 1.2195822126036298,
+  "telefono": "602365996",
+  "email": "info@justclean.es",
+  "direccion": "Carrer del Penedès, 9, ",
+  "codigoPostal": "43006 ",
+  "zonas": [
+    "Centre",
+    "Serrallo",
+    "Balmeto",
+    "Fontes",
+    "Parc Central del Mediterràni",
+    "Les Cols",
+    "Sant Pere i Sant Pau",
+    "El Raval",
+    "Bonavista",
+    "Canaloses",
+    "Torreforta",
+    "Pinyeres",
+    "Casablanca",
+    "Baix Ebre",
+    "Reus"
+  ],
+  "serviciosActivos": [
+    "vaciado-pisos",
+    "vaciado-locales",
+    "recogida-muebles",
+    "limpieza-diogenes",
+    "limpieza-post-vaciado",
+    "pintura-express"
+  ],
+  "seoIntro": "Vaciado de pisos y locales en Tarragona: ¿buscas una solución profesional para vaciar, limpiar o preparar tu propiedad? JUSTC TARRA te ofrece servicios integrales de gestión de residuos, limpieza profunda y retirada de muebles en toda la ciudad de Tarragona, un municipio con más de 138.000 habitantes situado en la comarca del Baix Ebre, provincia de Barcelona. Nos encargamos de todo el proceso, desde la evaluación inicial hasta la eliminación responsable de trastos y escombros, facilitando la venta, alquiler o reforma de tu inmueble en {provincia}.",
+  "metaDesc": "Vaciado pisos y locales en Tarragona — Desokupa, limpieza integral y retirada de muebles a precios competitivos. ¡Solicita presupuesto sin compromiso!",
+  "ciudadesSecundarias": [
+    {
+      "nombre": "Reus",
+      "slug": "reus",
+      "seoIntro": "Vaciado de pisos y locales en Reus, la capital de la comarca del Baix Gaià en {provincia}, con más de 105.000 habitantes, es una prioridad para JUSTC TARRA. Ofrecemos servicios profesionales en todos los barrios, garantizando una gestión eficiente de desokupaciones y limpieza post-vaciado.  Atendemos tanto a particulares como a empresas.",
+      "metaDesc": "Vaciado de pisos y locales en Reus — Soluciones integrales para desahucios | JUSTC TARRA",
+      "zonas": [
+        "Barri Centre",
+        "Barri Estació",
+        "Sant Pere",
+        "La Florida",
+        "El Raval",
+        "Plaça Gran",
+        "Les Franqueses",
+        "Mas Blanc"
+      ],
+      "serviciosActivos": [
+        "vaciado-pisos",
+        "vaciado-locales",
+        "recogida-muebles",
+        "limpieza-diogenes",
+        "limpieza-post-vaciado",
+        "pintura-express"
+      ]
+    },
+    {
+      "nombre": "Salou",
+      "slug": "salou",
+      "seoIntro": "Vaciado de pisos y locales en Salou, destino turístico por excelencia de la Costa Dorada en {provincia}, requiere un servicio especializado. Vaciamos pisos, apartamentos turísticos y locales comerciales con rapidez y discreción. Somos expertos en el área metropolitana de Tarragona.",
+      "metaDesc": "Vaciado de pisos y locales en Salou — Desokupaciones rápidas y discretas | JUSTC TARRA",
+      "zonas": [
+        "Barri d'Estany Clar",
+        "Barri de Llevant",
+        "Barri del Centre",
+        "Barri de Ponent",
+        "Capellades",
+        "Torrentó",
+        "Riera Mala",
+        "San Salvador"
+      ],
+      "serviciosActivos": [
+        "vaciado-pisos",
+        "vaciado-locales",
+        "recogida-muebles",
+        "limpieza-diogenes",
+        "limpieza-post-vaciado",
+        "pintura-express"
+      ]
+    },
+    {
+      "nombre": "Cambrils",
+      "slug": "cambrils",
+      "seoIntro": "Vaciado de pisos y locales en Cambrils, importante puerto pesquero y destino turístico de la provincia de {provincia}, es un servicio que ofrecemos con total profesionalidad. Nos encargamos de todo el proceso: desde la notificación hasta la limpieza final, pasando por la retirada de mobiliario.  Atendemos a particulares y empresas.",
+      "metaDesc": "Vaciado de pisos y locales en Cambrils — Servicios profesionales y eficientes | JUSTC TARRA",
+      "zonas": [
+        "Barri Antic",
+        "Barri del Port",
+        "Sant Pere",
+        "La Riera",
+        "Voltes",
+        "Cap Pelat",
+        "Lo Pla",
+        "Les Esequies"
+      ],
+      "serviciosActivos": [
+        "vaciado-pisos",
+        "vaciado-locales",
+        "recogida-muebles",
+        "limpieza-diogenes",
+        "limpieza-post-vaciado",
+        "pintura-express"
+      ]
+    },
+    {
+      "nombre": "Amposta",
+      "slug": "amposta",
+      "seoIntro": "Vaciado de pisos y locales en Amposta, situada en la comarca del Baix Ebre en {provincia}, es un servicio esencial para particulares e instituciones. Ofrecemos soluciones rápidas y eficientes para desokupaciones de viviendas y locales comerciales.  Contamos con un equipo especializado.",
+      "metaDesc": "Vaciado de pisos y locales en Amposta — Soluciones integrales y asequibles | JUSTC TARRA",
+      "zonas": [
+        "Centre",
+        "Barri Xic",
+        "Sant Mateu",
+        "La Font",
+        "El Portal",
+        "Les Boques",
+        "Casanova",
+        "Plaça Catalunya"
+      ],
+      "serviciosActivos": [
+        "vaciado-pisos",
+        "vaciado-locales",
+        "recogida-muebles",
+        "limpieza-diogenes",
+        "limpieza-post-vaciado",
+        "pintura-express"
+      ]
+    },
+    {
+      "nombre": "Tortosa",
+      "slug": "tortosa",
+      "seoIntro": "Vaciado de pisos y locales en Tortosa, ciudad histórica en la provincia de {provincia}, es una solución profesional para desokupaciones.  Nos encargamos de todo el proceso, desde la evaluación inicial hasta la limpieza final, garantizando la máxima eficiencia y discreción. Cubrimos toda la comarca del Baix Ebre.",
+      "metaDesc": "Vaciado de pisos y locales en Tortosa — Expertos en desahucios y limpieza | JUSTC TARRA",
+      "zonas": [
+        "Barri Antic",
+        "Sant Joan",
+        "La Romana",
+        "Les Basses",
+        "El Boqueta",
+        "Plaça Salvador Fontseca",
+        "Centre"
+      ],
+      "serviciosActivos": [
+        "vaciado-pisos",
+        "vaciado-locales",
+        "recogida-muebles",
+        "limpieza-diogenes",
+        "limpieza-post-vaciado",
+        "pintura-express"
+      ]
+    },
+    {
+      "nombre": "Altafulla",
+      "slug": "altafulla",
+      "seoIntro": "Vaciado de pisos y locales en Altafulla, encantador municipio costero de la provincia de {provincia}, requiere un servicio discreto y profesional.  Nos especializamos en desokupaciones rápidas y eficientes, respetando siempre la normativa vigente. Atendemos a particulares y comunidades.",
+      "metaDesc": "Vaciado de pisos y locales en Altafulla — Servicios rápidos, discretos y profesionales | JUSTC TARRA",
+      "zonas": [
+        "Centre",
+        "Platja Nova",
+        "Beguda del Rec",
+        "Mas Pinyol",
+        "Barri Antic",
+        "Torrent Gros",
+        "Puig Rodó"
+      ],
+      "serviciosActivos": [
+        "vaciado-pisos",
+        "vaciado-locales",
+        "recogida-muebles",
+        "limpieza-diogenes",
+        "limpieza-post-vaciado",
+        "pintura-express"
+      ]
+    },
+    {
+      "nombre": "Constantí",
+      "slug": "constanti",
+      "seoIntro": "Vaciado de pisos y locales en Constantí, municipio situado en la comarca del Baix Penedès en {provincia}, es un servicio que ofrecemos con total profesionalidad. Nos encargamos de todo el proceso: desde la notificación hasta la limpieza final, pasando por la retirada de mobiliario.  Atendemos a particulares y empresas.",
+      "metaDesc": "Vaciado de pisos y locales en Constantí — Soluciones integrales para desahucios | JUSTC TARRA",
+      "zonas": [
+        "Centre",
+        "Barri Sant Pere",
+        "Barri del Remei",
+        "La Rabassada",
+        "Les Basses",
+        "Mas Mir",
+        "Ca l'Aranyó"
+      ],
+      "serviciosActivos": [
+        "vaciado-pisos",
+        "vaciado-locales",
+        "recogida-muebles",
+        "limpieza-diogenes",
+        "limpieza-post-vaciado",
+        "pintura-express"
+      ]
+    }
+  ]
+}

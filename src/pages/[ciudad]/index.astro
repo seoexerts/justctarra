@@ -1,0 +1,209 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BreadcrumbSchema from '../../components/BreadcrumbSchema.astro';
+import { ciudades, EMPRESA } from '../../data/index';
+import { siteConfig } from '../../config/site';
+
+export async function getStaticPaths() {
+  return ciudades.map(ciudad => ({ params: { ciudad: ciudad.slug } }));
+}
+
+const { ciudad: ciudadSlug } = Astro.params;
+const ciudad = ciudades.find(c => c.slug === ciudadSlug)!;
+
+// Otras ciudades para interlinking
+const otrasCiudades = ciudades.filter(c => c.slug !== ciudadSlug);
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const canonical   = `${siteConfig.web}/${ciudadSlug}/`;
+const titleFormulas: Record<number, string> = {
+  1: `${siteConfig.serviceType} en ${ciudad.nombre} | ${EMPRESA.nombre}`,
+  2: `${EMPRESA.nombre} — ${siteConfig.serviceType} en ${ciudad.nombre}`,
+  3: `${siteConfig.serviceType} en ${ciudad.nombre} ✓ ${EMPRESA.nombre}`,
+  4: `Expertos en ${siteConfig.serviceType} · ${ciudad.nombre} | ${EMPRESA.nombre}`,
+};
+const title = titleFormulas[siteConfig.titleFormula ?? 1] ?? titleFormulas[1];
+const description = ciudad.metaDesc || `${siteConfig.serviceType} en ${ciudad.nombre}. ${EMPRESA.nombre} — presupuesto gratis, atención rápida y cobertura en toda la zona.`;
+---
+
+<BaseLayout title={title} description={description} canonical={canonical}>
+  <BreadcrumbSchema
+    items={[
+      { name: 'Inicio',       url: `${siteConfig.web}/` },
+      { name: ciudad.nombre,  url: canonical },
+    ]}
+    slot="head"
+  />
+
+  <!-- ── Page header ── -->
+  <div class="page-header">
+    <div class="container">
+      <span class="eyebrow">{siteConfig.serviceType} · {ciudad.nombre}</span>
+      <h1>{siteConfig.serviceType} en {ciudad.nombre}</h1>
+      <p class="page-header-sub">{ciudad.seoIntro}</p>
+      <div class="header-ctas">
+        <a href="/contacto" class="btn btn-white btn-lg">Presupuesto gratis →</a>
+        <a
+          href={`https://wa.me/${EMPRESA.whatsapp}?text=${encodeURIComponent(`Hola, necesito información sobre ${siteConfig.serviceType} en ${ciudad.nombre}`)}`}
+          class="btn btn-whatsapp btn-lg"
+          target="_blank" rel="noopener noreferrer"
+        >💬 WhatsApp</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Servicios disponibles en esta ciudad ── -->
+  <section class="page-section" aria-labelledby="servicios-heading">
+    <div class="container">
+      <div class="section-header">
+        <h2 id="servicios-heading">Nuestros servicios de {siteConfig.serviceType} en {ciudad.nombre}</h2>
+        <p class="section-sub">Selecciona el servicio que necesitas para ver toda la información, precios orientativos y zonas de cobertura en {ciudad.nombre}.</p>
+      </div>
+      <ul class="srv-grid">
+        {ciudad.servicios.map(servicio => (
+          <li>
+            <a href={`/${ciudadSlug}/${servicio.slug}/`} class="srv-card">
+              <div class="srv-card-body">
+                <h3>{cap(servicio.nombre)} en {ciudad.nombre}</h3>
+                <p>{servicio.descripcionCorta.replace(/\{ciudad\}/g, ciudad.nombre).replace(/\{provincia\}/g, ciudad.provincia).replace(/\{empresa\}/g, EMPRESA.nombre)}</p>
+              </div>
+              <div class="srv-card-footer">
+                <span class="srv-link">Ver servicio y presupuesto →</span>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── Zonas de cobertura ── -->
+  {ciudad.zonas.length > 0 && (
+    <section class="page-section page-section--tinted" aria-labelledby="zonas-heading">
+      <div class="container">
+        <div class="section-header">
+          <h2 id="zonas-heading">Zonas de {ciudad.nombre} donde prestamos servicio</h2>
+          <p class="section-sub">Cubrimos todos los barrios y distritos de {ciudad.nombre} sin recargo por desplazamiento.</p>
+        </div>
+        <div class="zonas-grid">
+          {ciudad.zonas.map(zona => (
+            <span class="zona-tag">{zona}</span>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- ── Interlinking: otras ciudades ── -->
+  {otrasCiudades.length > 0 && (
+    <section class="page-section" aria-labelledby="otras-ciudades-heading">
+      <div class="container">
+        <h2 id="otras-ciudades-heading">También trabajamos en estas ciudades</h2>
+        <p class="section-sub">{siteConfig.serviceType} profesional en {ciudad.nombre} y toda la comarca.</p>
+        <ul class="interlink-grid">
+          {otrasCiudades.map(c => (
+            <li>
+              <a href={`/${c.slug}/`} class="interlink-card">
+                <span class="interlink-title">{siteConfig.serviceType} en {c.nombre}</span>
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4"/>
+                </svg>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <!-- ── CTA final ── -->
+  <section class="page-section srv-cta-section" aria-label="Llamada a la acción">
+    <div class="container">
+      <div class="srv-cta-box">
+        <div class="srv-cta-text">
+          <h2>¿Necesitas {siteConfig.serviceType} en {ciudad.nombre}?</h2>
+          <p>Presupuesto gratuito y sin compromiso. Respondemos en menos de 2 horas.</p>
+        </div>
+        <div class="srv-cta-btns">
+          <a href="/contacto" class="btn btn-white btn-lg">Solicitar presupuesto →</a>
+          <a
+            href={`https://wa.me/${EMPRESA.whatsapp}?text=${encodeURIComponent(`Hola, necesito información sobre ${siteConfig.serviceType} en ${ciudad.nombre}`)}`}
+            class="btn btn-whatsapp btn-lg"
+            target="_blank" rel="noopener noreferrer"
+          >💬 WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  .page-header {
+    margin-top: var(--header-h);
+    background: var(--c-hero-gradient);
+    padding-block: 4.5rem 3.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-header::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size: 28px 28px; pointer-events: none;
+  }
+  .page-header::after {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 55% 60% at 75% 15%, rgba(0,100,255,.3) 0%, transparent 65%),
+      radial-gradient(ellipse 35% 40% at 15% 85%, rgba(80,80,200,.15) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .page-header .container { position: relative; z-index: 1; }
+  .page-header .eyebrow { color: rgba(255,255,255,.9); background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); }
+  .page-header h1 { color: #fff; margin-bottom: .75rem; margin-top: .5rem; }
+  .page-header-sub { color: rgba(255,255,255,.72); font-size: 1rem; max-width: 600px; margin-inline: auto; line-height: 1.75; margin-bottom: 1.75rem; }
+  .header-ctas { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+
+  /* ── Service grid ── */
+  .srv-grid { list-style: none; display: grid; gap: 1.25rem; }
+  @media (min-width: 640px)  { .srv-grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1024px) { .srv-grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .srv-card {
+    display: flex; flex-direction: column; height: 100%;
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    text-decoration: none; color: var(--c-text);
+    transition: border-color .15s, box-shadow .15s, transform .15s;
+    overflow: hidden;
+  }
+  .srv-card:hover { border-color: var(--c-primary); box-shadow: var(--sh-card); transform: translateY(-2px); text-decoration: none; }
+  .srv-card-body { padding: 1.5rem 1.5rem 1rem; flex: 1; }
+  .srv-card-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: .6rem; color: var(--c-text); }
+  .srv-card:hover h3 { color: var(--c-primary); }
+  .srv-card-body p { font-size: .875rem; color: var(--c-text-m); line-height: 1.6; margin: 0; }
+  .srv-card-footer { padding: .85rem 1.5rem; border-top: 1px solid var(--c-border); }
+  .srv-link { font-size: .83rem; font-weight: 600; color: var(--c-primary); }
+
+  /* ── Zonas ── */
+  .zonas-grid { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .25rem; }
+  .zona-tag { font-size: .82rem; padding: .3rem .75rem; background: var(--c-bg); border: 1px solid var(--c-border); border-radius: 999px; color: var(--c-text-m); }
+
+  /* ── Interlinking ── */
+  .interlink-grid { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .65rem; margin-top: 1.25rem; }
+  .interlink-card { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .85rem 1.1rem; background: var(--c-bg); border: 1px solid var(--c-border); border-radius: var(--r-md); text-decoration: none; color: var(--c-text); font-size: .875rem; font-weight: 500; transition: border-color .15s, color .15s; }
+  .interlink-card:hover { border-color: var(--c-primary); color: var(--c-primary); text-decoration: none; }
+  .interlink-card svg { flex-shrink: 0; width: 16px; height: 16px; opacity: .4; }
+  .interlink-title { flex: 1; }
+
+  /* ── CTA ── */
+  .srv-cta-section { padding-bottom: 4rem; }
+  .srv-cta-box { background: linear-gradient(135deg, var(--c-primary) 0%, #0040c8 100%); border-radius: var(--r-xl); padding: 3rem 2.5rem; display: flex; flex-wrap: wrap; gap: 2rem; align-items: center; justify-content: space-between; }
+  .srv-cta-text h2 { color: #fff; font-size: 1.5rem; margin-bottom: .5rem; }
+  .srv-cta-text p  { color: rgba(255,255,255,.8); font-size: 1rem; margin: 0; }
+  .srv-cta-btns { display: flex; flex-wrap: wrap; gap: .75rem; }
+  .btn-white { display: inline-block; padding: .75rem 1.5rem; border-radius: 7px; font-weight: 700; font-size: .95rem; text-decoration: none; background: #fff; color: var(--c-primary); transition: filter .15s; }
+  .btn-white:hover { filter: brightness(.96); text-decoration: none; }
+</style>
